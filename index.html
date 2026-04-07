@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="원석 플랜">
+<meta name="theme-color" content="#00e5c3">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>원석 1년 플랜</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg:#0a0c10; --s1:#12151c; --s2:#1a1e28; --s3:#222736; --bd:#2a2f3e;
+  --teal:#00e5c3; --blue:#3d9aff; --orange:#ff6b35; --purple:#a855f7;
+  --green:#22c55e; --red:#ef4444; --yellow:#fbbf24;
+  --text:#e8eaf0; --muted:#6b7280; --dim:#3d4451;
+  --c-aero:#c9a84c; --c-phys:#4ecdc4; --c-ai:#5b8af5;
+  --c-drone:#e8834a; --c-eng:#7cb87a; --c-write:#e06b6b; --c-iprd:#9b7fe8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;font-size:14px;
+  min-height:100vh;overflow-x:hidden;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+
+/* PIN SCREEN */
+.pin-screen{
+  position:fixed;inset:0;background:var(--bg);z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+}
+.pin-screen.hidden{display:none}
+.pin-logo{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:4px;color:var(--teal)}
+.pin-sub{font-size:12px;color:var(--muted);letter-spacing:1px}
+.pin-dots{display:flex;gap:12px;margin:8px 0}
+.pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--bd);transition:all 0.2s}
+.pin-dot.filled{background:var(--teal);border-color:var(--teal)}
+.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:240px}
+.pin-btn{
+  height:64px;border-radius:14px;border:1px solid var(--bd);
+  background:var(--s1);color:var(--text);font-size:22px;
+  font-family:'Noto Sans KR',sans-serif;cursor:pointer;
+  transition:all 0.15s;display:flex;align-items:center;justify-content:center;
+  font-weight:500;
+}
+.pin-btn:active{background:var(--teal);color:#000;transform:scale(0.95)}
+.pin-btn.del{font-size:18px;color:var(--muted)}
+.pin-error{font-size:12px;color:var(--red);height:16px;text-align:center}
+.pin-set-mode{font-size:11px;color:var(--muted);text-align:center;margin-top:-8px}
+
+/* NAV */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(10,12,16,0.95);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;overflow-x:auto;scrollbar-width:none;
+}
+.nav::-webkit-scrollbar{display:none}
+.nav-title{
+  font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;
+  padding:12px 16px;color:var(--text);border-right:1px solid var(--bd);flex-shrink:0;
+}
+.nav-title span{color:var(--teal)}
+.nav-btn{
+  flex-shrink:0;padding:14px 16px;font-size:12px;font-family:inherit;
+  color:var(--muted);background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap;
+}
+.nav-btn.active{color:var(--teal);border-bottom-color:var(--teal)}
+
+/* BOTTOM NAV */
+.bnav{
+  display:none;position:fixed;bottom:0;left:0;right:0;
+  background:rgba(10,12,16,0.97);backdrop-filter:blur(12px);
+  border-top:1px solid var(--bd);
+  padding:6px 0 max(env(safe-area-inset-bottom),8px);
+  z-index:100;justify-content:space-around;
+}
+.bn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  background:none;border:none;color:var(--muted);font-size:10px;
+  cursor:pointer;padding:4px 8px;font-family:inherit;transition:color 0.15s;
+}
+.bn.active{color:var(--teal)}
+.bn-icon{font-size:20px;line-height:1}
+
+/* PAGES */
+.page{display:none;padding:18px 14px 90px;max-width:900px;margin:0 auto}
+.page.active{display:block}
+
+/* SECTION TITLE */
+.stitle{
+  font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:2px;
+  margin-bottom:14px;display:flex;align-items:center;gap:10px;
+}
+.stitle::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--bd),transparent)}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:12px}
+.ctitle{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px}
+
+/* PROGRESS */
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.pitem{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:13px}
+.plabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.pval{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;margin-bottom:7px}
+.pbar-bg{height:5px;background:var(--bd);border-radius:99px;overflow:hidden}
+.pbar{height:100%;border-radius:99px;transition:width .6s ease}
+.pnote{font-size:10px;color:var(--muted);margin-top:4px}
+
+/* TIMETABLE */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl{min-width:520px;display:grid;grid-template-columns:40px repeat(5,1fr);gap:3px;font-size:11px}
+.th{text-align:center;padding:7px 3px;font-size:11px;color:var(--muted);font-weight:500}
+.tt{font-size:10px;color:var(--dim);text-align:right;padding-right:5px;display:flex;align-items:center;justify-content:flex-end;min-height:42px}
+.tc{border-radius:6px;min-height:42px;background:var(--s2);display:flex;align-items:center;justify-content:center;font-size:9px;color:var(--dim);text-align:center}
+.tcl{padding:5px 4px;border-radius:6px;color:#fff;font-size:9px;font-weight:600;line-height:1.3;text-align:center}
+.tcl .rm{font-size:8px;opacity:.7;margin-top:2px}
+.s2{grid-row:span 2}.s3{grid-row:span 3}.s4{grid-row:span 4}
+
+/* CHECKLIST */
+.ccat{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin:14px 0 7px;padding-bottom:5px;border-bottom:1px solid var(--bd)}
+.citem{display:flex;align-items:flex-start;gap:9px;padding:8px 5px;border-radius:8px;cursor:pointer;transition:background .15s;user-select:none}
+.citem:hover{background:rgba(255,255,255,0.03)}
+.cb{width:18px;height:18px;flex-shrink:0;border:1.5px solid var(--bd);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .2s;margin-top:1px}
+.citem.done .cb{background:var(--teal);border-color:var(--teal);color:#000}
+.citem.done .ct{text-decoration:line-through;color:var(--muted)}
+.ct{font-size:13px;flex:1}
+.cs{font-size:11px;color:var(--muted);margin-top:2px}
+.tag{font-size:9px;padding:2px 6px;border-radius:99px;flex-shrink:0;margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+.td{background:rgba(0,229,195,.15);color:var(--teal)}
+.tw{background:rgba(61,154,255,.15);color:var(--blue)}
+.tm{background:rgba(168,85,247,.15);color:var(--purple)}
+
+/* DATE NAV */
+.dnav{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.dnav-btn{background:var(--s2);border:1px solid var(--bd);color:var(--text);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center}
+.ddisp{flex:1;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;color:var(--teal)}
+.today-btn{background:var(--teal)!important;color:#000!important;border-color:var(--teal)!important;font-size:11px!important;font-family:'Noto Sans KR',sans-serif!important;font-weight:700!important;width:auto!important;padding:0 12px!important}
+
+/* COMPLETE BAR */
+.cbar-wrap{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px 14px;margin-bottom:12px;display:flex;align-items:center;gap:12px}
+.cpct{font-family:'Bebas Neue',sans-serif;font-size:34px;color:var(--teal);flex-shrink:0}
+
+/* SUBJECT CARDS */
+.sgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sc{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:13px;position:relative}
+.sn{font-size:12px;font-weight:700;margin-bottom:3px}
+.sr{font-size:10px;color:var(--muted);margin-bottom:9px}
+.srow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.slabel{font-size:10px;color:var(--muted);width:44px;flex-shrink:0}
+.gsel,.sinput{flex:1;background:var(--s3);border:1px solid var(--bd);color:var(--text);border-radius:6px;padding:5px 7px;font-size:11px;font-family:inherit}
+.gsel:focus,.sinput:focus{outline:none;border-color:var(--teal)}
+.arow{display:flex;gap:3px;flex-wrap:wrap;margin-top:6px}
+.adot{width:22px;height:22px;border-radius:5px;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;border:1px solid var(--bd);background:var(--s3);color:var(--muted);transition:all .15s;font-weight:700}
+.adot.ok{background:rgba(34,197,94,.25);border-color:var(--green);color:var(--green)}
+.adot.late{background:rgba(251,191,36,.25);border-color:var(--yellow);color:var(--yellow)}
+.adot.abs{background:rgba(239,68,68,.25);border-color:var(--red);color:var(--red)}
+.aadd{background:none;border:1px dashed var(--bd);color:var(--muted);border-radius:5px;width:22px;height:22px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.stars{display:flex;gap:3px;margin-top:6px}
+.star{font-size:17px;cursor:pointer;opacity:.25;transition:opacity .15s;line-height:1}
+.star.on{opacity:1}
+.smemo{width:100%;margin-top:8px;background:var(--s3);border:1px solid var(--bd);color:var(--text);border-radius:6px;padding:6px 8px;font-size:11px;font-family:inherit;resize:vertical;min-height:55px}
+.smemo:focus{outline:none;border-color:var(--teal)}
+
+/* WEIGHT */
+.winput-row{display:flex;gap:8px;margin-bottom:10px}
+.wi{flex:1;background:var(--s2);border:1px solid var(--bd);color:var(--text);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit}
+.wi:focus{outline:none;border-color:var(--teal)}
+.wbtn{background:var(--teal);color:#000;border:none;border-radius:8px;padding:10px 16px;font-size:13px;font-family:inherit;font-weight:700;cursor:pointer}
+.wlog{max-height:220px;overflow-y:auto}
+.witem{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px}
+.witem:last-child{border-bottom:none}
+.wkg{font-family:'Bebas Neue',sans-serif;font-size:20px}
+.wdel{background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:2px 6px}
+
+/* TIMELINE */
+.tline{position:relative;padding-left:20px}
+.tline::before{content:'';position:absolute;left:6px;top:10px;bottom:10px;width:2px;background:linear-gradient(to bottom,var(--teal),var(--blue),var(--purple));border-radius:2px}
+.ms{position:relative;margin-bottom:20px;padding-left:18px}
+.ms::before{content:'';position:absolute;left:-14px;top:6px;width:10px;height:10px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue)}
+.ms-period{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.ms-title{font-size:14px;font-weight:700;margin:3px 0 6px}
+.ms-tags{display:flex;flex-wrap:wrap;gap:4px}
+.ms-tag{font-size:10px;padding:2px 8px;background:var(--s2);border:1px solid var(--bd);border-radius:4px;color:var(--text)}
+
+/* TODAY CLASSES */
+.tcls{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.tci{display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:10px 12px}
+.tcc{width:4px;height:36px;border-radius:2px;flex-shrink:0}
+.tcn{font-size:13px;font-weight:500}
+.tct{font-size:11px;color:var(--muted)}
+.tcr{font-size:10px;color:var(--dim);margin-top:2px}
+
+/* POPUP */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.popup{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:20px;width:90%;max-width:320px}
+.popup h3{margin-bottom:12px;font-size:15px}
+.pbtn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--bd);background:var(--s2);color:var(--text);font-family:inherit;font-size:12px;cursor:pointer}
+.pbtn.pri{background:var(--teal);color:#000;font-weight:700;border-color:var(--teal)}
+
+/* QUICK BANNER */
+.qbanner{background:linear-gradient(135deg,rgba(0,229,195,.08),rgba(61,154,255,.08));border:1px solid rgba(0,229,195,.25);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.qbanner h3{font-size:12px;color:var(--teal);margin-bottom:5px}
+.qbanner p{font-size:11px;color:var(--muted);line-height:1.7}
+
+::-webkit-scrollbar{width:3px;height:3px}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+
+@media(max-width:640px){
+  .sgrid{grid-template-columns:1fr}
+  .bnav{display:flex}
+  .nav{display:none}
+  .page{padding:14px 12px 90px}
+}
+</style>
+</head>
+<body>
+
+<!-- ══ PIN SCREEN ══ -->
+<div class="pin-screen" id="pin-screen">
+  <div class="pin-logo">원석<span style="color:var(--text)"> 플랜</span></div>
+  <div class="pin-sub" id="pin-sub">PIN 입력</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+  </div>
+  <div class="pin-error" id="pin-error"></div>
+  <div class="pin-pad">
+    <button class="pin-btn" onclick="pinInput('1')">1</button>
+    <button class="pin-btn" onclick="pinInput('2')">2</button>
+    <button class="pin-btn" onclick="pinInput('3')">3</button>
+    <button class="pin-btn" onclick="pinInput('4')">4</button>
+    <button class="pin-btn" onclick="pinInput('5')">5</button>
+    <button class="pin-btn" onclick="pinInput('6')">6</button>
+    <button class="pin-btn" onclick="pinInput('7')">7</button>
+    <button class="pin-btn" onclick="pinInput('8')">8</button>
+    <button class="pin-btn" onclick="pinInput('9')">9</button>
+    <div></div>
+    <button class="pin-btn" onclick="pinInput('0')">0</button>
+    <button class="pin-btn del" onclick="pinDel()">⌫</button>
+  </div>
+  <div class="pin-set-mode" id="pin-set-mode"></div>
+</div>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="nav">
+  <div class="nav-title">원석 <span>플랜</span></div>
+  <button class="nav-btn active" onclick="pg('home',this)">🏠 홈</button>
+  <button class="nav-btn" onclick="pg('timetable',this)">📅 시간표</button>
+  <button class="nav-btn" onclick="pg('daily',this)">✅ 데일리</button>
+  <button class="nav-btn" onclick="pg('subjects',this)">📚 학업</button>
+  <button class="nav-btn" onclick="pg('body',this)">⚖️ 체중</button>
+  <button class="nav-btn" onclick="pg('goals',this)">🎯 목표</button>
+</nav>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bnav">
+  <button class="bn active" onclick="pg('home',this,'b')"><span class="bn-icon">🏠</span>홈</button>
+  <button class="bn" onclick="pg('timetable',this,'b')"><span class="bn-icon">📅</span>시간표</button>
+  <button class="bn" onclick="pg('daily',this,'b')"><span class="bn-icon">✅</span>데일리</button>
+  <button class="bn" onclick="pg('subjects',this,'b')"><span class="bn-icon">📚</span>학업</button>
+  <button class="bn" onclick="pg('body',this,'b')"><span class="bn-icon">⚖️</span>체중</button>
+  <button class="bn" onclick="pg('goals',this,'b')"><span class="bn-icon">🎯</span>목표</button>
+</nav>
+
+<!-- ══════════ HOME ══════════ -->
+<div id="page-home" class="page active">
+  <div class="qbanner">
+    <h3>📱 앱으로 저장하기</h3>
+    <p>
+      <b>아이폰:</b> Safari → 하단 공유(□↑) → "홈 화면에 추가"<br>
+      <b>안드로이드:</b> Chrome → 주소창 오른쪽 메뉴 → "앱 설치" 또는 "홈 화면에 추가"
+    </p>
+  </div>
+
+  <div class="stitle">오늘 수업</div>
+  <div class="tcls" id="today-cls"></div>
+
+  <div class="stitle">전체 진행률</div>
+  <div class="pgrid">
+    <div class="pitem">
+      <div class="plabel">체중 감량</div>
+      <div class="pval" id="h-wt" style="color:var(--orange)">89kg</div>
+      <div class="pbar-bg"><div class="pbar" id="h-wb" style="background:var(--orange);width:0%"></div></div>
+      <div class="pnote" id="h-wn">목표 70kg</div>
+    </div>
+    <div class="pitem">
+      <div class="plabel">숨참기</div>
+      <div class="pval" id="h-br" style="color:var(--teal)">-</div>
+      <div class="pbar-bg"><div class="pbar" id="h-bb" style="background:var(--teal);width:17%"></div></div>
+      <div class="pnote">30초 → 3분 목표</div>
+    </div>
+    <div class="pitem">
+      <div class="plabel">오늘 체크</div>
+      <div class="pval" id="h-pct" style="color:var(--purple)">0%</div>
+      <div class="pbar-bg"><div class="pbar" id="h-pb" style="background:var(--purple);width:0%"></div></div>
+      <div class="pnote" id="h-pl">0 / 13 완료</div>
+    </div>
+    <div class="pitem">
+      <div class="plabel">수심 목표</div>
+      <div class="pval" id="h-dp" style="color:var(--blue)">0m</div>
+      <div class="pbar-bg"><div class="pbar" id="h-db" style="background:var(--blue);width:0%"></div></div>
+      <div class="pnote">목표 20m</div>
+    </div>
+  </div>
+
+  <button onclick="pg('daily',null)" style="width:100%;padding:12px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;color:var(--teal);font-family:inherit;font-size:13px;cursor:pointer;margin-bottom:16px;">
+    ✅ 데일리 체크리스트 바로가기 →
+  </button>
+
+  <div style="background:linear-gradient(135deg,rgba(0,229,195,.07),rgba(61,154,255,.07));border:1px solid rgba(0,229,195,.2);border-radius:12px;padding:16px;text-align:center">
+    <div style="font-size:26px;margin-bottom:6px">🐢</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;color:var(--teal);margin-bottom:4px">최종 목표</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7">사말섬 동쪽 바다 수심 15m<br><b style="color:var(--text)">액션캠으로 바다거북 영상 찍기</b></div>
+  </div>
+</div>
+
+<!-- ══════════ TIMETABLE ══════════ -->
+<div id="page-timetable" class="page">
+  <div class="stitle">시간표</div>
+  <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px">
+    <span style="font-size:10px;color:var(--muted);background:rgba(201,168,76,.15);padding:2px 8px;border-radius:4px">항공우주학개론</span>
+    <span style="font-size:10px;color:var(--muted);background:rgba(78,205,196,.15);padding:2px 8px;border-radius:4px">대학기초물리</span>
+    <span style="font-size:10px;color:var(--muted);background:rgba(91,138,245,.15);padding:2px 8px;border-radius:4px">인공지능기초와활용</span>
+    <span style="font-size:10px;color:var(--muted);background:rgba(232,131,74,.15);padding:2px 8px;border-radius:4px">드론조종실습</span>
+    <span style="font-size:10px;color:var(--muted);background:rgba(124,184,122,.15);padding:2px 8px;border-radius:4px">English 1</span>
+    <span style="font-size:10px;color:var(--muted);background:rgba(224,107,107,.15);padding:2px 8px;border-radius:4px">창의적글쓰기</span>
+  </div>
+  <div class="tbl-wrap">
+    <div class="tbl">
+      <div class="th"></div>
+      <div class="th" style="color:var(--text)">월</div>
+      <div class="th" style="color:var(--text)">화</div>
+      <div class="th" style="color:var(--teal)">수</div>
+      <div class="th" style="color:var(--teal)">목</div>
+      <div class="th" style="color:var(--text)">금</div>
+
+      <div class="tt">9시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tcl s2" style="background:var(--c-aero)">항공우주학개론<div class="rm">07-502 이론강의실1</div></div>
+      <div class="tcl s2" style="background:var(--c-phys)">대학기초물리<div class="rm">08-214 강의실</div></div>
+      <div class="tc"></div>
+
+      <div class="tt">10시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+
+      <div class="tt">11시</div>
+      <div class="tc"></div>
+      <div class="tcl s2" style="background:var(--c-aero)">항공우주학개론<div class="rm">07-502 공동</div></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tcl s2" style="background:var(--c-ai)">인공지능기초와활용<div class="rm">42-103 코딩실습실1</div></div>
+
+      <div class="tt">12시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+
+      <div class="tt">13시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tcl s3" style="background:var(--c-drone)">드론조종실습<div class="rm">07-301 무인항공기실</div></div>
+
+      <div class="tt">14시</div>
+      <div class="tc"></div>
+      <div class="tcl s2" style="background:var(--c-eng)">English 1<div class="rm">20-135 첨단</div></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+
+      <div class="tt">15시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+
+      <div class="tt">16시</div>
+      <div class="tcl s2" style="background:var(--c-write)">창의적글쓰기<div class="rm">09-308 첨단</div></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+
+      <div class="tt">17시</div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+      <div class="tc"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="ctitle">기타 · IP-R&D</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:4px;height:36px;background:var(--c-iprd);border-radius:2px;flex-shrink:0"></div>
+      <div><div style="font-size:13px;font-weight:700">IP-R&D</div><div style="font-size:11px;color:var(--muted)">일정 별도 확인</div></div>
+    </div>
+  </div>
+
+  <div class="stitle" style="margin-top:18px">운동 스케줄</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div style="background:var(--s1);border-radius:8px;padding:12px;border-left:3px solid var(--teal)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">수 09시 이전</div>
+      <div style="font-size:12px;font-weight:700">🤿 프리다이빙</div>
+      <div style="font-size:10px;color:var(--muted)">수영장 스태틱/다이나믹</div>
+    </div>
+    <div style="background:var(--s1);border-radius:8px;padding:12px;border-left:3px solid var(--orange)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">목 오전 자유시간</div>
+      <div style="font-size:12px;font-weight:700">💪 웨이트</div>
+      <div style="font-size:10px;color:var(--muted)">헬스장</div>
+    </div>
+    <div style="background:var(--s1);border-radius:8px;padding:12px;border-left:3px solid var(--green)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">화·토</div>
+      <div style="font-size:12px;font-weight:700">🏃 러닝 30분</div>
+      <div style="font-size:10px;color:var(--muted)">수업 후</div>
+    </div>
+    <div style="background:var(--s1);border-radius:8px;padding:12px;border-left:3px solid var(--orange)">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">금 드론 후 (16시~)</div>
+      <div style="font-size:12px;font-weight:700">💪 웨이트</div>
+      <div style="font-size:10px;color:var(--muted)">헬스장</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ DAILY ══════════ -->
+<div id="page-daily" class="page">
+  <div class="stitle">데일리 체크</div>
+  <div class="dnav">
+    <button class="dnav-btn" onclick="chDate(-1)">‹</button>
+    <div class="ddisp" id="ddisp"></div>
+    <button class="dnav-btn" onclick="chDate(1)">›</button>
+    <button class="dnav-btn today-btn" onclick="goToday()">오늘</button>
+  </div>
+  <div class="cbar-wrap">
+    <div class="cpct" id="dpct">0%</div>
+    <div style="flex:1">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:5px" id="dlabel">0 / 0 완료</div>
+      <div class="pbar-bg"><div class="pbar" id="dbar" style="background:var(--teal);width:0%"></div></div>
+    </div>
+  </div>
+  <div id="daily-list">
+    <div class="ccat">🌅 아침 루틴</div>
+    <div class="citem" data-key="breath" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">횡격막 호흡 10분</div><div class="cs">배로 숨쉬기</div></div><span class="tag td">매일</span></div>
+    <div class="citem" data-key="breakfast" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">아침 식사 (굶지 말기)</div><div class="cs">바나나 1개 + 달걀 2개</div></div><span class="tag td">매일</span></div>
+
+    <div class="ccat">🏋️ 운동</div>
+    <div class="citem" data-key="workout" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">운동 완료</div><div class="cs">웨이트 / 러닝 / 수영 택1</div></div><span class="tag tw">주 4회</span></div>
+    <div class="citem" data-key="freedive" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">프리다이빙 연습</div><div class="cs">수 오전 수영장</div></div><span class="tag tw">주 1회</span></div>
+
+    <div class="ccat">🗣️ 영어</div>
+    <div class="citem" data-key="shadow" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">영어 쉐도잉 20분</div><div class="cs">이동 중 or 저녁</div></div><span class="tag td">매일</span></div>
+    <div class="citem" data-key="speak" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">원어민 화상영어 10분</div><div class="cs">Cambly / Speak 앱</div></div><span class="tag tw">주 3회</span></div>
+
+    <div class="ccat">📚 학업</div>
+    <div class="citem" data-key="review" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">당일 수업 복습 30분</div><div class="cs">18~19시 고정</div></div><span class="tag td">매일</span></div>
+    <div class="citem" data-key="assign" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">과제 마감 확인</div><div class="cs">내일 일정 체크</div></div><span class="tag td">매일</span></div>
+    <div class="citem" data-key="preview" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">내일 수업 예습</div><div class="cs">핵심 개념 훑기</div></div><span class="tag td">매일</span></div>
+
+    <div class="ccat">🍽️ 식단</div>
+    <div class="citem" data-key="noramen" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">라면/핫도그 안 먹음</div><div class="cs">주 2회 이하 목표</div></div><span class="tag td">체크</span></div>
+    <div class="citem" data-key="meal" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">학식 밥 양 조절</div><div class="cs">주먹 크기, 국물 반만</div></div><span class="tag td">매일</span></div>
+    <div class="citem" data-key="water" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">물 1.5L 이상</div><div class="cs">폐활량에도 직결</div></div><span class="tag td">매일</span></div>
+
+    <div class="ccat">📝 오늘 메모</div>
+    <textarea id="dmemo" class="smemo" style="margin-top:0;width:100%;min-height:80px" placeholder="오늘 컨디션, 특이사항, 느낀 점..." oninput="saveMemo(this.value)"></textarea>
+  </div>
+</div>
+
+<!-- ══════════ SUBJECTS ══════════ -->
+<div id="page-subjects" class="page">
+  <div class="stitle">학업 관리</div>
+  <div class="sgrid">
+
+    <div class="sc" style="border-top:2px solid var(--c-aero)">
+      <div style="font-size:8px;color:var(--c-aero);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">화 11:00 · 수 09:00</div>
+      <div class="sn">항공우주학개론</div><div class="sr">07-502</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="aero" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="aero" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-aero"><button class="aadd" onclick="addAtt('aero')">+</button></div>
+      <textarea class="smemo" data-s="aero" data-f="memo" placeholder="메모 (과제, 시험...)" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-phys)">
+      <div style="font-size:8px;color:var(--c-phys);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">목 09:00</div>
+      <div class="sn">대학기초물리</div><div class="sr">08-214</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="phys" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="phys" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-phys"><button class="aadd" onclick="addAtt('phys')">+</button></div>
+      <textarea class="smemo" data-s="phys" data-f="memo" placeholder="메모" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-ai)">
+      <div style="font-size:8px;color:var(--c-ai);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">금 11:00</div>
+      <div class="sn">인공지능기초와활용</div><div class="sr">42-103 코딩실습실1</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="ai" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="ai" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-ai"><button class="aadd" onclick="addAtt('ai')">+</button></div>
+      <textarea class="smemo" data-s="ai" data-f="memo" placeholder="메모" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-drone)">
+      <div style="font-size:8px;color:var(--c-drone);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">금 13:00</div>
+      <div class="sn">드론조종실습</div><div class="sr">07-301 무인항공기실</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="drone" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="drone" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-drone"><button class="aadd" onclick="addAtt('drone')">+</button></div>
+      <textarea class="smemo" data-s="drone" data-f="memo" placeholder="메모" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-eng)">
+      <div style="font-size:8px;color:var(--c-eng);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">화 14:00</div>
+      <div class="sn">English 1</div><div class="sr">20-135 첨단</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="eng" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="eng" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-eng"><button class="aadd" onclick="addAtt('eng')">+</button></div>
+      <textarea class="smemo" data-s="eng" data-f="memo" placeholder="메모" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-write)">
+      <div style="font-size:8px;color:var(--c-write);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">월 16:00</div>
+      <div class="sn">창의적글쓰기</div><div class="sr">09-308 첨단</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="write" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:4px;margin-bottom:3px">이해도</div>
+      <div class="stars" data-s="write" data-f="stars" onclick="rateStar(this,event)"><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span></div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;margin-bottom:3px">출석</div>
+      <div class="arow" id="att-write"><button class="aadd" onclick="addAtt('write')">+</button></div>
+      <textarea class="smemo" data-s="write" data-f="memo" placeholder="메모" oninput="ssubj(this)"></textarea>
+    </div>
+
+    <div class="sc" style="border-top:2px solid var(--c-iprd);grid-column:1/-1">
+      <div style="font-size:8px;color:var(--c-iprd);text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">일정 별도</div>
+      <div class="sn">IP-R&D</div><div class="sr">별도 안내</div>
+      <div class="srow"><div class="slabel">학점</div>
+        <select class="gsel" data-s="iprd" data-f="grade" onchange="ssubj(this)">
+          <option value="">선택</option><option>A+</option><option>A0</option><option>B+</option><option>B0</option><option>C+</option><option>C0</option><option>D+</option><option>D0</option><option>F</option>
+        </select>
+      </div>
+      <textarea class="smemo" data-s="iprd" data-f="memo" placeholder="일정 메모, 과제..." oninput="ssubj(this)" style="min-height:70px"></textarea>
+    </div>
+  </div>
+
+  <!-- 출석 팝업 -->
+  <div class="overlay" id="att-popup">
+    <div class="popup">
+      <h3>출석 상태 선택</h3>
+      <div style="display:flex;gap:8px">
+        <button class="pbtn pri" onclick="confAtt('ok')">✅ 출석</button>
+        <button class="pbtn" style="background:rgba(251,191,36,.2);border-color:var(--yellow);color:var(--yellow)" onclick="confAtt('late')">⚠️ 지각</button>
+        <button class="pbtn" style="background:rgba(239,68,68,.2);border-color:var(--red);color:var(--red)" onclick="confAtt('abs')">❌ 결석</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="pbtn" onclick="closeAtt()">취소</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ BODY ══════════ -->
+<div id="page-body" class="page">
+  <div class="stitle">체중 기록</div>
+  <div class="pgrid">
+    <div class="pitem">
+      <div class="plabel">현재 체중</div>
+      <div class="pval" id="cw" style="color:var(--orange)">89.0<span style="font-size:13px">kg</span></div>
+      <div class="pnote">시작 89kg</div>
+    </div>
+    <div class="pitem">
+      <div class="plabel">감량</div>
+      <div class="pval" id="lw" style="color:var(--teal)">0.0<span style="font-size:13px">kg</span></div>
+      <div class="pnote" id="rw">목표까지 19.0kg</div>
+    </div>
+  </div>
+  <div class="pbar-bg" style="height:8px;margin-bottom:18px">
+    <div class="pbar" id="wmb" style="background:linear-gradient(to right,var(--orange),var(--teal));width:0%;height:8px"></div>
+  </div>
+  <div class="card">
+    <div class="ctitle">체중 입력</div>
+    <div class="winput-row">
+      <input type="number" class="wi" id="wi" placeholder="예: 88.5" step="0.1" min="40" max="200">
+      <button class="wbtn" onclick="addW()">기록</button>
+    </div>
+    <div class="wlog" id="wlog"><div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div></div>
+  </div>
+
+  <div class="stitle" style="margin-top:18px">숨참기 기록</div>
+  <div class="card">
+    <div class="ctitle">스태틱 어프니아 (초)</div>
+    <div class="winput-row">
+      <input type="number" class="wi" id="bi" placeholder="예: 90초" min="0" max="600">
+      <button class="wbtn" onclick="addB()">기록</button>
+    </div>
+    <div class="wlog" id="blog"><div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div></div>
+  </div>
+
+  <div class="stitle" style="margin-top:18px">수심 기록</div>
+  <div class="card">
+    <div class="ctitle">최고 수심 (m)</div>
+    <div class="winput-row">
+      <input type="number" class="wi" id="di" placeholder="예: 10" min="0" max="100">
+      <button class="wbtn" onclick="addD()">기록</button>
+    </div>
+    <div class="wlog" id="dlog"><div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div></div>
+  </div>
+</div>
+
+<!-- ══════════ GOALS ══════════ -->
+<div id="page-goals" class="page">
+  <div class="stitle">분기별 목표</div>
+  <div class="tline">
+    <div class="ms"><div class="ms-period">1~3개월</div><div class="ms-title" style="color:var(--orange)">🔥 기초 세팅</div><div class="ms-tags"><span class="ms-tag">체중 -4kg</span><span class="ms-tag">숨참기 2분</span><span class="ms-tag">AIDA 레벨1 등록</span><span class="ms-tag">쉐도잉 습관화</span><span class="ms-tag">아침식사 루틴</span></div></div>
+    <div class="ms"><div class="ms-period">4~6개월</div><div class="ms-title" style="color:var(--blue)">📈 실력 빌드업</div><div class="ms-tags"><span class="ms-tag">체중 -8kg 누적</span><span class="ms-tag">수심 10m</span><span class="ms-tag">이퀄라이징 마스터</span><span class="ms-tag">화상영어 시작</span><span class="ms-tag">다이나믹 50m</span></div></div>
+    <div class="ms"><div class="ms-period">7~9개월</div><div class="ms-title" style="color:var(--teal)">🌊 실전 전환</div><div class="ms-tags"><span class="ms-tag">체중 -14kg 누적</span><span class="ms-tag">수심 15~18m</span><span class="ms-tag">AIDA 레벨2 취득</span><span class="ms-tag">오픈워터</span><span class="ms-tag">영어 문장 확장</span></div></div>
+    <div class="ms"><div class="ms-period">10~12개월</div><div class="ms-title" style="color:var(--purple)">🐢 다바오 준비 완료</div><div class="ms-tags"><span class="ms-tag">체중 75~76kg</span><span class="ms-tag">수심 20m</span><span class="ms-tag">숨참기 3분</span><span class="ms-tag">다이브샵 영어</span><span class="ms-tag">🐢 바다거북 재조우</span></div></div>
+  </div>
+
+  <div class="stitle" style="margin-top:8px">월간 체크</div>
+  <div class="card">
+    <div class="ccat" style="margin-top:0">🤿 프리다이빙</div>
+    <div class="citem" data-key="m1" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">스태틱 어프니아 기록 측정</div><div class="cs">매월 1일 체중 탭에 기록</div></div><span class="tag tm">월 1회</span></div>
+    <div class="citem" data-key="m2" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">프리다이빙 영상 2편</div><div class="cs">기술/이론 유튜브</div></div><span class="tag tm">월 2회</span></div>
+    <div class="ccat">🎓 학업</div>
+    <div class="citem" data-key="m3" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">시험 일정 3주 전 파악</div><div class="cs">월초에 확인</div></div><span class="tag tm">월초</span></div>
+    <div class="ccat">🗣️ 영어</div>
+    <div class="citem" data-key="m4" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">다이빙 영어 표현 10개 암기</div><div class="cs">equalize, dive buddy 등</div></div><span class="tag tm">월 1회</span></div>
+    <div class="citem" data-key="m5" onclick="tog(this)"><div class="cb">✓</div><div style="flex:1"><div class="ct">브이로그 영어 문장 1개 외우기</div><div class="cs">인트로 or 장소 소개</div></div><span class="tag tm">월 1회</span></div>
+  </div>
+</div>
+
+<script>
+// ══ PIN ══
+const DEF_PIN = '0000';
+let pinBuf = '';
+let pinMode = 'check'; // 'set' | 'check'
+
+function ld(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}}
+function sv(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+
+function initPin(){
+  const stored = ld('pin', null);
+  if(!stored){ pinMode='set'; document.getElementById('pin-sub').textContent='PIN 4자리 설정'; document.getElementById('pin-set-mode').textContent='처음 사용 시 PIN을 설정해주세요'; }
+  else{ pinMode='check'; document.getElementById('pin-sub').textContent='PIN 입력'; }
+}
+
+function pinInput(n){
+  if(pinBuf.length>=4) return;
+  pinBuf+=n;
+  updateDots();
+  if(pinBuf.length===4) setTimeout(checkPin,120);
+}
+function pinDel(){ pinBuf=pinBuf.slice(0,-1); updateDots(); }
+function updateDots(){
+  for(let i=0;i<4;i++) document.getElementById('d'+i).classList.toggle('filled',i<pinBuf.length);
+}
+function checkPin(){
+  const stored=ld('pin',null);
+  if(pinMode==='set'){
+    sv('pin',pinBuf);
+    document.getElementById('pin-screen').classList.add('hidden');
+    initApp();
+  } else {
+    if(pinBuf===stored){ document.getElementById('pin-screen').classList.add('hidden'); initApp(); }
+    else{ document.getElementById('pin-error').textContent='PIN이 틀렸어요'; pinBuf=''; updateDots(); setTimeout(()=>document.getElementById('pin-error').textContent='',1500); }
+  }
+}
+
+// ══ PAGE NAV ══
+function pg(id,btn,type){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(type==='b'){ document.querySelectorAll('.bn').forEach(b=>b.classList.remove('active')); if(btn)btn.classList.add('active'); }
+  else{ document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active')); if(btn)btn.classList.add('active'); }
+  if(id==='daily') renderDaily();
+  if(id==='home') updateHome();
+  if(id==='body'){renderWlog();renderBlog();renderDlog();}
+}
+
+// ══ TODAY CLASSES ══
+const CLS={
+  0:[{n:'창의적글쓰기',t:'16:00~18:00',r:'09-308 첨단',c:'var(--c-write)'}],
+  1:[{n:'항공우주학개론',t:'11:00~12:00',r:'07-502 공동',c:'var(--c-aero)'},{n:'English 1',t:'14:00~16:00',r:'20-135 첨단',c:'var(--c-eng)'}],
+  2:[{n:'항공우주학개론',t:'09:00~11:00',r:'07-502 이론강의실1',c:'var(--c-aero)'}],
+  3:[{n:'대학기초물리',t:'09:00~10:00',r:'08-214 강의실',c:'var(--c-phys)'}],
+  4:[{n:'인공지능기초와활용',t:'11:00~13:00',r:'42-103 코딩실습실1',c:'var(--c-ai)'},{n:'드론조종실습',t:'13:00~16:00',r:'07-301 무인항공기실',c:'var(--c-drone)'}],
+  5:[],6:[]
+};
+function renderTodayCls(){
+  const dow=new Date().getDay();
+  const cls=CLS[dow]||[];
+  const el=document.getElementById('today-cls');
+  if(!cls.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;padding:12px;text-align:center">오늘은 수업이 없어요 💤</div>';return;}
+  el.innerHTML=cls.map(c=>`<div class="tci"><div class="tcc" style="background:${c.c}"></div><div><div class="tcn">${c.n}</div><div class="tct">${c.t}</div><div class="tcr">${c.r}</div></div></div>`).join('');
+}
+
+// ══ DAILY ══
+const CKEYS=['breath','breakfast','workout','freedive','shadow','speak','review','assign','preview','noramen','meal','water'];
+let curDate=new Date(); curDate.setHours(0,0,0,0);
+
+function dkey(d){return d.toISOString().slice(0,10)}
+function renderDaily(){
+  const k=dkey(curDate);
+  const data=ld('d-'+k,{});
+  const days=['일','월','화','수','목','금','토'];
+  document.getElementById('ddisp').textContent=`${curDate.getMonth()+1}월 ${curDate.getDate()}일 (${days[curDate.getDay()]})`;
+  document.querySelectorAll('#daily-list .citem').forEach(el=>{
+    const key=el.dataset.key; if(!key)return;
+    el.classList.toggle('done',!!data[key]);
+  });
+  const memo=document.getElementById('dmemo');
+  if(memo) memo.value=data.memo||'';
+  updDprog();
+}
+function tog(el){
+  el.classList.toggle('done');
+  const pg=el.closest('.page');
+  if(pg&&pg.id==='page-daily') saveDItem(el);
+  updDprog();
+}
+function saveDItem(el){
+  const k=dkey(curDate); const data=ld('d-'+k,{});
+  const key=el.dataset.key; if(key) data[key]=el.classList.contains('done');
+  sv('d-'+k,data);
+}
+function saveMemo(v){const k=dkey(curDate);const data=ld('d-'+k,{});data.memo=v;sv('d-'+k,data);}
+function updDprog(){
+  const items=document.querySelectorAll('#daily-list .citem');
+  const total=items.length; const done=[...items].filter(e=>e.classList.contains('done')).length;
+  const pct=total?Math.round(done/total*100):0;
+  document.getElementById('dpct').textContent=pct+'%';
+  document.getElementById('dlabel').textContent=`${done} / ${total} 완료`;
+  document.getElementById('dbar').style.width=pct+'%';
+}
+function chDate(d){curDate=new Date(curDate.getTime()+d*86400000);renderDaily();}
+function goToday(){curDate=new Date();curDate.setHours(0,0,0,0);renderDaily();}
+
+// ══ SUBJECTS ══
+function ssubj(el){const s=el.dataset.s;const f=el.dataset.f;const data=ld('s-'+s,{});data[f]=el.value;sv('s-'+s,data);}
+function rateStar(container,e){
+  const stars=container.querySelectorAll('.star');
+  const idx=[...stars].indexOf(e.target); if(idx<0)return;
+  const s=container.dataset.s; const data=ld('s-'+s,{});
+  data.stars=idx+1; sv('s-'+s,data);
+  stars.forEach((st,i)=>st.classList.toggle('on',i<=idx));
+}
+function loadSubjs(){
+  ['aero','phys','ai','drone','eng','write','iprd'].forEach(s=>{
+    const data=ld('s-'+s,{});
+    const g=document.querySelector(`select[data-s="${s}"]`); if(g&&data.grade)g.value=data.grade;
+    const st=document.querySelector(`.stars[data-s="${s}"]`);
+    if(st&&data.stars)st.querySelectorAll('.star').forEach((x,i)=>x.classList.toggle('on',i<data.stars));
+    const m=document.querySelector(`textarea[data-s="${s}"]`); if(m&&data.memo)m.value=data.memo;
+    renderAtt(s);
+  });
+}
+// attendance
+let pendAtt=null;
+function addAtt(s){pendAtt=s;document.getElementById('att-popup').classList.add('show');}
+function closeAtt(){document.getElementById('att-popup').classList.remove('show');pendAtt=null;}
+function confAtt(st){
+  if(!pendAtt)return;
+  const data=ld('att-'+pendAtt,[]);
+  data.push({s:st,d:new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric'})});
+  sv('att-'+pendAtt,data); renderAtt(pendAtt); closeAtt();
+}
+function renderAtt(s){
+  const el=document.getElementById('att-'+s); if(!el)return;
+  const data=ld('att-'+s,[]);
+  const m={ok:'✓',late:'⚠',abs:'✕'};
+  el.innerHTML=data.map((a,i)=>`<div class="adot ${a.s}" title="${a.d}" onclick="delAtt('${s}',${i})">${m[a.s]}</div>`).join('')+`<button class="aadd" onclick="addAtt('${s}')">+</button>`;
+}
+function delAtt(s,i){const data=ld('att-'+s,[]);data.splice(i,1);sv('att-'+s,data);renderAtt(s);}
+
+// ══ WEIGHT ══
+const SW=89,GW=70;
+function addW(){
+  const v=parseFloat(document.getElementById('wi').value);
+  if(!v||v<30||v>300){alert('올바른 체중을 입력해주세요');return;}
+  const logs=ld('wlogs',[]); logs.unshift({kg:v,d:new Date().toLocaleDateString('ko-KR')});
+  sv('wlogs',logs); document.getElementById('wi').value=''; renderWlog();
+}
+function renderWlog(){
+  const logs=ld('wlogs',[]);
+  const curr=logs.length?logs[0].kg:SW;
+  const lost=Math.max(0,SW-curr);
+  const pct=Math.min(100,lost/(SW-GW)*100);
+  document.getElementById('cw').innerHTML=`${curr.toFixed(1)}<span style="font-size:13px">kg</span>`;
+  document.getElementById('lw').innerHTML=`-${lost.toFixed(1)}<span style="font-size:13px">kg</span>`;
+  document.getElementById('rw').textContent=`목표까지 ${(curr-GW).toFixed(1)}kg`;
+  document.getElementById('wmb').style.width=pct+'%';
+  // home
+  const hwt=document.getElementById('h-wt'); if(hwt)hwt.textContent=curr.toFixed(1)+'kg';
+  const hwb=document.getElementById('h-wb'); if(hwb)hwb.style.width=pct+'%';
+  const hwn=document.getElementById('h-wn'); if(hwn)hwn.textContent=`감량 ${lost.toFixed(1)}kg`;
+  const el=document.getElementById('wlog');
+  if(!logs.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div>';return;}
+  el.innerHTML=logs.map((l,i)=>{
+    const prev=logs[i+1]; const diff=prev?l.kg-prev.kg:0;
+    const ds=diff===0?'':(diff>0?`<span style="color:var(--red);font-size:11px">+${diff.toFixed(1)}</span>`:`<span style="color:var(--teal);font-size:11px">${diff.toFixed(1)}</span>`);
+    return `<div class="witem"><div><span class="wkg" style="color:var(--orange)">${l.kg}</span><span style="font-size:10px;color:var(--muted)">kg</span> ${ds}</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--muted)">${l.d}</span><button class="wdel" onclick="delW(${i})">×</button></div></div>`;
+  }).join('');
+}
+function delW(i){const l=ld('wlogs',[]);l.splice(i,1);sv('wlogs',l);renderWlog();}
+
+// ══ BREATH ══
+function addB(){
+  const v=parseInt(document.getElementById('bi').value);
+  if(!v||v<0){alert('초 단위로 입력해주세요');return;}
+  const logs=ld('blogs',[]); logs.unshift({sec:v,d:new Date().toLocaleDateString('ko-KR')});
+  sv('blogs',logs); document.getElementById('bi').value=''; renderBlog();
+}
+function renderBlog(){
+  const logs=ld('blogs',[]);
+  const hb=document.getElementById('h-bb'); const hr=document.getElementById('h-br');
+  if(logs.length&&hb){hb.style.width=Math.min(100,logs[0].sec/180*100)+'%';}
+  if(logs.length&&hr){const m=Math.floor(logs[0].sec/60);const s=logs[0].sec%60;hr.textContent=(m?m+'분 ':'')+s+'초';}
+  const el=document.getElementById('blog'); if(!el)return;
+  if(!logs.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div>';return;}
+  el.innerHTML=logs.map((l,i)=>{
+    const m=Math.floor(l.sec/60);const s=l.sec%60;const disp=(m?m+'분 ':'')+s+'초';
+    const prev=logs[i+1];const diff=prev?l.sec-prev.sec:0;
+    const ds=diff===0?'':(diff>0?`<span style="color:var(--teal);font-size:11px">+${diff}초</span>`:`<span style="color:var(--red);font-size:11px">${diff}초</span>`);
+    return `<div class="witem"><div><span class="wkg" style="color:var(--teal)">${disp}</span> ${ds}</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--muted)">${l.d}</span><button class="wdel" onclick="delB(${i})">×</button></div></div>`;
+  }).join('');
+}
+function delB(i){const l=ld('blogs',[]);l.splice(i,1);sv('blogs',l);renderBlog();}
+
+// ══ DEPTH ══
+function addD(){
+  const v=parseFloat(document.getElementById('di').value);
+  if(!v||v<0){alert('미터 단위로 입력해주세요');return;}
+  const logs=ld('dlogs',[]); logs.unshift({m:v,d:new Date().toLocaleDateString('ko-KR')});
+  sv('dlogs',logs); document.getElementById('di').value=''; renderDlog();
+}
+function renderDlog(){
+  const logs=ld('dlogs',[]);
+  const hp=document.getElementById('h-dp'); const hb=document.getElementById('h-db');
+  if(logs.length){
+    if(hp)hp.textContent=logs[0].m+'m';
+    if(hb)hb.style.width=Math.min(100,logs[0].m/20*100)+'%';
+  }
+  const el=document.getElementById('dlog'); if(!el)return;
+  if(!logs.length){el.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:16px">아직 기록이 없어요</div>';return;}
+  el.innerHTML=logs.map((l,i)=>{
+    const prev=logs[i+1];const diff=prev?l.m-prev.m:0;
+    const ds=diff===0?'':(diff>0?`<span style="color:var(--teal);font-size:11px">+${diff}m</span>`:`<span style="color:var(--red);font-size:11px">${diff}m</span>`);
+    return `<div class="witem"><div><span class="wkg" style="color:var(--blue)">${l.m}</span><span style="font-size:10px;color:var(--muted)">m</span> ${ds}</div><div style="display:flex;align-items:center;gap:6px"><span style="font-size:10px;color:var(--muted)">${l.d}</span><button class="wdel" onclick="delD(${i})">×</button></div></div>`;
+  }).join('');
+}
+function delD(i){const l=ld('dlogs',[]);l.splice(i,1);sv('dlogs',l);renderDlog();}
+
+// ══ HOME ══
+function updateHome(){
+  renderTodayCls(); renderWlog(); renderBlog(); renderDlog();
+  const k=dkey(new Date()); const data=ld('d-'+k,{});
+  const done=CKEYS.filter(k=>data[k]).length;
+  const pct=Math.round(done/CKEYS.length*100);
+  const hpct=document.getElementById('h-pct'); if(hpct)hpct.textContent=pct+'%';
+  const hpb=document.getElementById('h-pb'); if(hpb)hpb.style.width=pct+'%';
+  const hpl=document.getElementById('h-pl'); if(hpl)hpl.textContent=`${done} / ${CKEYS.length} 완료`;
+}
+
+// ══ SERVICE WORKER ══
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+
+// ══ INIT ══
+window.onload=function(){
+  initPin();
+  initApp();
+};
+function initApp(){
+  renderTodayCls(); updateHome(); renderDaily(); loadSubjs(); renderWlog(); renderBlog(); renderDlog();
+}
+</script>
+</body>
+</html>
